@@ -29,6 +29,7 @@ def download_mp3(message):
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
+            'cookies': 'cookies.txt'  # Use exported cookies
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
