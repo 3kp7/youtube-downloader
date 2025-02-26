@@ -2,7 +2,7 @@ import os
 
 import telebot
 
-from pytube import Youtube
+import yt_dlp
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 
@@ -10,22 +10,48 @@ bot = telebot.TeleBot(BOT_TOKEN)
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "Mp3 or Mp4 File")
+    bot.reply_to(message, "Send /mp3 or /mp4 followed by the YouTube link.")
 
-@bot.message_handler(commands=['Mp3'])
-def send_message(message):
-    bot.reply_to(message, "Provide me with link")
+@bot.message_handler(commands=['mp3'])
+def download_mp3(message):
+    url = message.text.split(" ", 1)[-1]
+    if not url.startswith("http"):
+        bot.reply_to(message, "Please provide a valid YouTube link.")
+        return
+
+    try:
+        output_file = "downloaded_audio.mp3"
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': output_file,
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+
+        with open(output_file, "rb") as audio_file:
+            bot.send_audio(message.chat.id, audio_file)
+
+        os.remove(output_file)  # Cleanup
+
+    except Exception as e:
+        bot.reply_to(message, f"Error: {str(e)}")
+
 
 @bot.message_handler(commands=['Mp4'])
 def send_message(message):
     bot.reply_to(message, "Provide me with link")
 
-def mp3_video(url):
-    video_caller = Youtube(url)
-    print(video_caller.title)
-    video_caller.stream.filter(progressive=True,extention="mp3".order_by(
-            'resolution').desc().first().download())
-            print("done")
+
+
+    
+
+
 
     
 bot.infinity_polling()
