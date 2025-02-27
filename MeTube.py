@@ -1,8 +1,8 @@
 import os
 
 import telebot
-
 import yt_dlp
+
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 
@@ -18,7 +18,6 @@ def download_mp3(message):
     if not url.startswith("http"):
         bot.reply_to(message, "Please provide a valid YouTube link.")
         return
-
     try:
         output_file = "downloaded_audio.mp3"
         ydl_opts = {
@@ -44,11 +43,24 @@ def download_mp3(message):
         bot.reply_to(message, f"Error: {str(e)}")
 
 
-@bot.message_handler(commands=['Mp4'])
-def send_message(message):
-    bot.reply_to(message, "Provide me with link")
+@bot.message_handler(commands=['mp4'])
+def mp4_handler(message):
+    text = "Please provide a link for a youtube video."
+    sent_msg = bot.send_message(message.chat.id, text)
+    bot.register_next_step_handler(sent_msg, video_handler)
 
-
+def video_handler(message):
+        video_url = message.text
+        output_file = 'C:/Users/Civ/Desktop/youtube/%(title)s.%(ext)s'
+        ydl_opts = {
+             'format': 'bestvideo+bestaudio/best',
+             'outtmpl': output_file,
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+             ydl.download([video_url])
+        bot.send_document(message.chat.id, output_file)
+        
+        os.remove(output_file)
 
     
 
